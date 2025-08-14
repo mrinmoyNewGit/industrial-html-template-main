@@ -3,7 +3,7 @@ name: Deploy Laravel to Vercel
 on:
   push:
     branches:
-      - main   # or your default branch
+      - main   # Change if your default branch is different
 
 jobs:
   deploy:
@@ -11,7 +11,7 @@ jobs:
 
     steps:
       # 1. Checkout code
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       # 2. Set up PHP
@@ -26,21 +26,26 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-dev --optimize-autoloader
 
-      # 4. Install Node (if Laravel Mix/Vite used)
+      # 4. Set up Node.js (if you use Laravel Mix or Vite)
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      # 5. Install JS dependencies & build assets (optional)
+      # 5. Install JS dependencies & build assets
       - name: Install NPM dependencies
         run: npm install
 
-      - name: Build assets
+      - name: Build frontend assets
         run: npm run build || echo "No build script found"
 
-      # 6. Deploy to Vercel
+      # 6. Cache Laravel configuration
+      - name: Optimize Laravel
+        run: |
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache || true
+
+      # 7. Deploy to Vercel
       - name: Deploy to Vercel
-        run: npx vercel --prod --yes
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
